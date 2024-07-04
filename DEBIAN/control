@@ -1,0 +1,14 @@
+Package: chonos-lxc-template
+Version: 0.0.1
+Priority:
+Architecture: all
+Essential:
+Depends: 
+Pre-depends: lxc
+Suggests:
+Installed-Size:
+Maintainer: chon@grupo.cefet-rj.br
+Conflicts: chonos, choncloud 
+Replaces:
+Provides:
+Description: Meta package that provide an LXC ChonOS Template.
