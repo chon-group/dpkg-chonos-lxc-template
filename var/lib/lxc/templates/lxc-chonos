@@ -957,6 +957,7 @@ post_process "${rootfs}" "${release}" ${arch} ${hostarch} "${interpreter}" "${pa
 #####################################
 echo "deb [trusted=yes] http://packages.chon.group/ chonos main" > "$rootfs/etc/apt/sources.list.d/chonos.list"
 chroot "${rootfs}" apt update
+chroot "${rootfs}" apt full-upgrade
 chroot "${rootfs}" apt install -y choncloud
 
 ####################################
