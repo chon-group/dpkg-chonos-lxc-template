@@ -52,6 +52,33 @@ DEBIAN_PORTS_ARCHIVE_KEYRING=/usr/share/keyrings/debian-ports-archive-keyring.gp
 KEYRING=${KEYRING:-${DEBIAN_ARCHIVE_KEYRING}}
 DOWNLOAD_KEYRING=${DOWNLOAD_KEYRING:-1}
 
+
+chonCloudPackagesInstall()
+{
+    echo "deb http://deb.debian.org/debian stable main contrib non-free non-free-firmware" > "$cache/rootfs-$release-$arch/etc/apt/sources.list"
+    echo "deb [trusted=yes] http://packages.chon.group/ chonos main" > "$cache/rootfs-$release-$arch/etc/apt/sources.list.d/chonos.list"
+    echo "nameserver 8.8.8.8" > "$cache/rootfs-$release-$arch/etc/resolv.conf"
+
+    mount -o bind /dev "$cache/rootfs-$release-$arch/dev"
+    mount -o bind /sys "$cache/rootfs-$release-$arch/sys"
+    mount -o bind /proc "$cache/rootfs-$release-$arch/proc"
+
+    
+    chroot "$cache/rootfs-$release-$arch" apt update
+    chroot "$cache/rootfs-$release-$arch" apt full-upgrade -y
+    chroot "$cache/rootfs-$release-$arch" apt install -y choncloud   
+
+    umount "$cache/rootfs-$release-$arch/dev"
+    umount "$cache/rootfs-$release-$arch/sys"
+    umount "$cache/rootfs-$release-$arch/proc"
+
+}
+
+chonosCloudPostInstall()
+{
+    echo "root:root" | chroot $rootfs chpasswd
+}
+
 find_interpreter()
 {
     given_interpreter=$(basename "$1")
@@ -536,7 +563,7 @@ install_debian()
     rootfs=$1
     release=$2
     arch=$3
-    cache="$4/debian"
+    cache="$4/chonos"
     interpreter="$5"
     interpreter_path="$6"
     flushcache=$7
@@ -556,12 +583,15 @@ install_debian()
         echo "Checking cache download in $cache/rootfs-$release-$arch ... "
         if [ ! -e "$cache/rootfs-$release-$arch" ]; then
             download_debian "$cache" "$arch" "$release" "$interpreter" "$interpreter_path"
+            echo $cache
             if [ $? -ne 0 ]; then
                 echo "Failed to download 'debian base'"
                 return 1
             fi
         fi
 
+        chonCloudPackagesInstall
+ 
         copy_debian "$cache" "$arch" "$rootfs" "$release"
         if [ $? -ne 0 ]; then
             echo "Failed to copy rootfs"
@@ -954,14 +984,7 @@ configure_debian_systemd "$path" "$rootfs" "$config" $num_tty
 
 post_process "${rootfs}" "${release}" ${arch} ${hostarch} "${interpreter}" "${packages}"
 
-#####################################
-echo "deb [trusted=yes] http://packages.chon.group/ chonos main" > "$rootfs/etc/apt/sources.list.d/chonos.list"
-chroot "${rootfs}" apt update
-chroot "${rootfs}" apt full-upgrade
-chroot "${rootfs}" apt install -y choncloud
-
-####################################
-
+chonosCloudPostInstall
 
 if [ ! -z "$clean" ]; then
     clean || exit 1
