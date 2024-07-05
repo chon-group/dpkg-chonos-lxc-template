@@ -583,7 +583,6 @@ install_debian()
         echo "Checking cache download in $cache/rootfs-$release-$arch ... "
         if [ ! -e "$cache/rootfs-$release-$arch" ]; then
             download_debian "$cache" "$arch" "$release" "$interpreter" "$interpreter_path"
-            echo $cache
             if [ $? -ne 0 ]; then
                 echo "Failed to download 'debian base'"
                 return 1
